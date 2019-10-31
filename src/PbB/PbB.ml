@@ -1,21 +1,21 @@
-(* Lógica Computacional 2019/2020
- * Problema B
- *
- * Alunos:
- *    41358 - Beatriz Tavares da Costa
- *    41381 - Igor Cordeiro Bordalo Nunes
- *)
+(* ---------------------------------- *
+ *   Lógica Computacional 2019/2020   *
+ *             Problema B             *
+ *                                    *
+ * Igor Nunes, aka FunctionalBot      *
+ * ---------------------------------- *)
+
 
 exception UnmatchBracket          (* Há parêntesis não emparelhados *)
-exception EmptyStack              (* Levantado quando se tenta aceder à stack vazia *)
-exception InvalidExpression       (* A expressão não é válida *)
 exception UnknownToken            (* Token não reconhecido pela linguagem *)
+exception InvalidExpression       (* A expressão não é válida *)
+exception EmptyStack              (* Levantado quando se tenta aceder à stack vazia                       *)
+                                  (*   e.g.: parêntesis vazios, operadores binários com apenas 1 operando *)
 
 
 (* Classe stack - simplificação ao essencial do tipo do módulo Stack do OCaml
- *    Funções:        push, peek, pop
+ *    Funções:        push, pop
  *    Propriedades:   len, isEmpty
- *    Iterador:       iter
  * Podem existir métodos implementados apenas para fins de debug.
  *)
 class ['a] stack init = object
@@ -28,20 +28,14 @@ class ['a] stack init = object
 
   method push x = l <- x :: l
   
-  method peek =
-    match l with
-    | x :: _  -> x
-    | []      -> raise EmptyStack 
-  
   method isEmpty  = (l = [])
   method len      = List.length l
-  method iter f   = List.iter f l
 end
 
 
 (* Definição dos tokens da linguagem proposicional:
  *    Uma vez que não interessa o conteúdo, mas apenas a estrutura sintáctica,
- *    os tokens são reduzidos a uma expression que abstrai totalmente os operadores.
+ *    os tokens são reduzidos a uma expression que abstrai os operadores.
  *)
 type token =
   | True | False | Var
@@ -83,47 +77,43 @@ let rec lexer expr =
   let rec run ex = 
     match ex with
     | []             -> s#pop
-    | BracketL :: xs ->
-      let b, bs = bracket_expression xs in
-        s#push (Bracket (lexer b)); run bs
-    | BracketR :: _                         -> raise UnmatchBracket
-    | True :: xs | False :: xs | Var :: xs  -> s#push Constant; run xs
-    | Not :: xs                             -> UnaryOperation (run xs)
+    | BracketL :: xs -> let b, bs = bracket_expression xs in s#push (Bracket (lexer b)); run bs
+    | BracketR :: _  -> raise UnmatchBracket
+    | True :: xs | False :: xs | Var :: xs          -> s#push Constant; run xs
+    | Not :: xs                                     -> UnaryOperation (run xs)
     | And :: xs | Or :: xs | Eq :: xs | Then :: xs  -> BinaryOperation (s#pop, run xs)
   in
-    let result = run expr in
-      if s#isEmpty then result else raise InvalidExpression
+    let result = run expr in if s#isEmpty then result else raise InvalidExpression
 
 
 (* Tokenizer, versão altamente simplificada:
  *    Recebe lista de strings, cada string representa um token,
  *    e abstrai-o num enumerador
  *)
-let token_of = function
-  | "TRUE"  -> True
-  | "FALSE" -> False
-  | "("     -> BracketL
-  | ")"     -> BracketR
-  | "!"     -> Not
-  | "&"     -> And
-  | "|"     -> Or
-  | "->"    -> Then
-  | "<->"   -> Eq
-  | _       -> Var
-
-let tokenizer = List.map token_of
+let tokenizer =
+  let token_of = function
+    | "TRUE"  -> True
+    | "FALSE" -> False
+    | "("     -> BracketL
+    | ")"     -> BracketR
+    | "!"     -> Not
+    | "&"     -> And
+    | "|"     -> Or
+    | "->"    -> Then
+    | "<->"   -> Eq
+    | _       -> Var
+  in List.map token_of
 
 
 (* Leitura do input:
  *    Foi evitado o uso do módulo Scanf.
  *)
 let get_expression () =
-  let n = read_int () in
   let rec get_list k =
     if k = 0 then []
     else let line = String.capitalize_ascii (read_line ()) in line :: get_list (k-1)
   in
-    get_list n
+    get_list (read_int ())
 
 
 (* Função MAIN:
