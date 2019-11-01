@@ -5,6 +5,13 @@
  * Igor Nunes, aka FunctionalBot      *
  * ---------------------------------- *)
 
+(*
+ * CHANGELOG:
+ * V1.0 (29/out/2019) --- primeira versão
+ * V1.1 (31/out/2019) --- correcção de bug no operador unário
+ * V1.2 (01/nov/2019) --- correcção de bug no operador unário com parêntesis
+ *)
+
 
 exception UnmatchBracket          (* Há parêntesis não emparelhados *)
 exception UnknownToken            (* Token não reconhecido pela linguagem *)
@@ -80,18 +87,24 @@ let rec lexer expr =
     | BracketL :: xs -> let b, bs = bracket_expression xs in s#push (Bracket (lexer b)); run bs
     | BracketR :: _  -> raise UnmatchBracket
     | True :: xs | False :: xs | Var :: xs          -> s#push Constant; run xs
-    | Not :: xs                                     -> UnaryOperation (run xs)
     | And :: xs | Or :: xs | Eq :: xs | Then :: xs  -> BinaryOperation (s#pop, run xs)
+    | Not :: xs ->
+      (
+        match xs with
+        | []       -> raise InvalidExpression
+        | y :: ys  -> let tok1, tok2 = if y = BracketL then bracket_expression ys else [y], ys
+                      in s#push (UnaryOperation (lexer tok1)); run tok2
+      )
   in
     let result = run expr in if s#isEmpty then result else raise InvalidExpression
-
 
 (* Tokenizer, versão altamente simplificada:
  *    Recebe lista de strings, cada string representa um token,
  *    e abstrai-o num enumerador
  *)
 let tokenizer =
-  let token_of = function
+  let token_of =
+  function
     | "TRUE"  -> True
     | "FALSE" -> False
     | "("     -> BracketL

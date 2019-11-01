@@ -56,7 +56,7 @@ type expression =
 (* Funções de DEBUG *)
 let rec string_of_expression = function
   | Bracket x -> "Bracket of " ^ string_of_expression x
-  | UnaryOperation x -> "UnaryOperation " ^ string_of_expression x
+  | UnaryOperation x -> "UnaryOperation (" ^ string_of_expression x ^ ")"
   | BinaryOperation (x, y) -> "BinaryOperation (" ^ string_of_expression x ^ " * " ^ string_of_expression y ^ ")"
   | Constant -> "Constant"
   | Nothing -> "Nothing"
@@ -109,7 +109,13 @@ let rec lexer expr =
         s#push (Bracket (lexer b)); run bs
     | BracketR :: _                         -> raise UnmatchBracket
     | True :: xs | False :: xs | Var :: xs  -> s#push Constant; run xs
-    | Not :: xs                             -> UnaryOperation (run xs)
+    | Not :: xs ->
+      (
+        match xs with
+        | []       -> raise InvalidExpression
+        | y :: ys  -> let tok1, tok2 = if y = BracketL then bracket_expression ys else [y], ys
+                      in s#push (UnaryOperation (lexer tok1)); run tok2
+      )
     | And :: xs | Or :: xs | Eq :: xs | Then :: xs  -> BinaryOperation (s#pop, run xs)
   in
     let result = run expr in
@@ -120,19 +126,21 @@ let rec lexer expr =
  *    Recebe lista de strings, cada string representa um token,
  *    e abstrai-o num enumerador
  *)
-let token_of = function
-  | "TRUE"  -> True
-  | "FALSE" -> False
-  | "("     -> BracketL
-  | ")"     -> BracketR
-  | "!"     -> Not
-  | "&"     -> And
-  | "|"     -> Or
-  | "->"    -> Then
-  | "<->"   -> Eq
-  | _       -> Var
-
-let tokenizer = List.map token_of
+let tokenizer =
+  let token_of =
+    (* let is_only_letters s = Str.string_match (Str.regexp "[A-Z]+$") s 0 in *)
+  function
+    | "TRUE"  -> True
+    | "FALSE" -> False
+    | "("     -> BracketL
+    | ")"     -> BracketR
+    | "!"     -> Not
+    | "&"     -> And
+    | "|"     -> Or
+    | "->"    -> Then
+    | "<->"   -> Eq
+    | s       -> Var (* if is_only_letters s then Var else raise UnknownToken *)
+  in List.map token_of
 
 
 (* Leitura do input:
