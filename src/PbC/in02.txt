@@ -1,0 +1,5 @@
+4
+~p s q
+~p r s
+~q ~s p
+~q 0 p s
