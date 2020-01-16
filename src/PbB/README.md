@@ -35,14 +35,14 @@ A fórmula por analisar é dade de uma forma faseada, elemento por elemento, um 
 
 Usamos igualmente os parêntesis habituais `( )`, o caracter `&` para a conjunção, `!` para a negação, `|` para a disjunção, `->` para a implicação e finalmente `<->` para a equivalência.
 
-O input é então organizado da seguinte forma. Na primeira linha indica-se com um inteiro $N$ o tamanho da fórmula (quantos elementos sintácticos constituem a fórmula &mdash; ver exemplo).
+O input é então organizado da seguinte forma. Na primeira linha indica-se com um inteiro _N_ o tamanho da fórmula (quantos elementos sintácticos constituem a fórmula &mdash; ver exemplo).
 
-As $N$ linhas introduzem na ordem e um a um os elementos da fórmula.
+As _N_ linhas introduzem na ordem e um a um os elementos da fórmula.
 
 
 ### Constraints
 
-$0 \leq N \leq 100$
+* _0 ≤ N ≤ 100_
 
 
 ## Output
