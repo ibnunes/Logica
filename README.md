@@ -19,9 +19,9 @@ A linguagem escolhida foi **OCaml**.
 
 Foram realizados 3 problemas de Lógica:
 
-* **[Problema A](/src/PbA/PbA.md):** Quantas cavalgadas?
-* **[Problema B](/src/PbB/PbB.md):** Fórmulas proposicionais bem formadas
-* **[Problema C](/src/PbC/PbC.md):** Validade de fórmulas FNC
+* **[Problema A](/src/PbA/):** Quantas cavalgadas?
+* **[Problema B](/src/PbB/):** Fórmulas proposicionais bem formadas
+* **[Problema C](/src/PbC/):** Validade de fórmulas FNC
 
 
 ## Requisitos
