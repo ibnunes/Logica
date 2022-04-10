@@ -3,6 +3,7 @@
  *  Changelog:
  *      1.0 (10/04/2022) -> Primeira versão
  *      1.1 (10/04/2022) -> Parvoíce: não tirei todo o output de debug... enfim
+ *      1.2 (11/04/2022) -> Remoção de código desnecessário.
  * 
  * Para desenferrujar o meu OCaml, já tenho saudades destes exercícios :)
  * *)
@@ -62,22 +63,6 @@ and normalize_formula = function
 
 exception Malformed
 
-let normalize_disjs f =
-  let rec aux acc = function
-    | (Lit _ | Neg _ | Conj _) as f -> f :: acc
-    | Disj (((Lit _ | Neg _ | Conj _) as f_1), f_2) -> aux (f_1 :: acc) f_2
-    | Disj (Disj _, _) -> raise Malformed
-  in
-  aux [] f |> List.rev
-
-let normalize_conjs f =
-  let rec aux acc = function
-    | (Lit _ | Neg _ | Disj _) as f -> f :: acc
-    | Conj (((Lit _ | Neg _ | Disj _) as f_1), f_2) -> aux (f_1 :: acc) f_2
-    | Conj (Conj _, _) -> raise Malformed
-  in
-  aux [] f |> List.rev
-
 let string_of_formula =
   let rec aux conj disj f = function
     | Lit c -> f (Char.escaped c)
@@ -110,22 +95,15 @@ let print_formula f = normalize_formula f |> string_of_formula |> print_endline
 
 (* Solução *)
 
-let next_char c = c |> Char.code |> (+) 1 |> Char.chr
+let next_char c = Char.code c |> (+) 1 |> Char.chr
 
-let rec formula_of_truth c t acc =
-  match t with
-  | 1 :: [] -> (acc, true)
-  | 0 :: [] -> (acc, false)
-  | 1 :: xs -> formula_of_truth (next_char c) xs (Lit c :: acc)
-  | 0 :: xs -> formula_of_truth (next_char c) xs (Neg c :: acc)
+let rec formula_of_truth c acc = function
+  | x :: [] -> (acc, x = 1)
+  | 1 :: xs -> formula_of_truth (next_char c) (Lit c :: acc) xs
+  | 0 :: xs -> formula_of_truth (next_char c) (Neg c :: acc) xs
   | _       -> raise Malformed
 
-let formula_of_truth c t = formula_of_truth c t []
-
-let rec disjunction = function
-  | x :: [] -> x
-  | x :: xs -> Disj (x, disjunction xs)
-  | _       -> raise Malformed
+let formula_of_truth c t = formula_of_truth c [] t
 
 let rec conjunction = function
   | x :: [] -> x
@@ -138,13 +116,7 @@ let rec negate = function
   | Conj (x, y) -> Disj (negate x, negate y)
   | Disj (x, y) -> Conj (negate x, negate y)
 
-let rec power n = function
-  | 0 -> 1
-  | p -> n * power n (p - 1)
-
-let read_list n =
-  let l = read_line () |> String.split_on_char ' ' |> List.map int_of_string in
-  let () = assert (List.length l = n) in l
+let rec power n = function 0 -> 1 | p -> n * power n (p - 1)
 
 let rec get_fnd = function
   | (l, true)  :: xs -> conjunction l :: get_fnd xs
@@ -157,13 +129,13 @@ let rec get_fnc = function
   | []               -> []
 
 let solve truth =
-  let fnd = get_fnd truth |> (fun xs -> List.fold_left (fun acc x -> Disj (acc, x)) (List.hd xs) (List.tl xs)) in
-  let fnc = get_fnc truth |> (fun xs -> List.fold_left (fun acc x -> Conj (acc, x)) (List.hd xs) (List.tl xs)) in
+  let fnd = get_fnd truth |> (fun xs -> List.fold_left (fun acc x -> Disj (acc, x)) (List.hd xs) (List.tl xs))
+  and fnc = get_fnc truth |> (fun xs -> List.fold_left (fun acc x -> Conj (acc, x)) (List.hd xs) (List.tl xs)) in
     [fnd; fnc]
+
+let read_list _ = read_line () |> String.split_on_char ' ' |> List.map int_of_string
 
 let () =
   let k = read_int () in
-  let n = k + 1 in
-  let m = power 2 k in
-  let truth = List.init m (fun _ -> read_list n) in
-    truth |> List.map (formula_of_truth 'a') |> solve |> List.iter print_formula
+  let truth = List.init (power 2 k) read_list in
+    List.map (formula_of_truth 'a') truth |> solve |> List.iter print_formula
